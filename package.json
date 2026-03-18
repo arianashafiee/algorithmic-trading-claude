@@ -1,0 +1,15 @@
+{
+  "name": "@degentic/cc-trading-terminal",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "MCP server for agent-native crypto trading",
+  "main": "src/index.js",
+  "bin": { "cc-trading-terminal": "src/index.js" },
+  "scripts": { "start": "node src/index.js" },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.3",
+    "dotenv": "^16.4.7"
+  },
+  "engines": { "node": ">=18.0.0" }
+}

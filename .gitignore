@@ -1,0 +1,9 @@
+node_modules/
+.history-seed/
+.env
+.env.local
+*.log
+logs/
+.DS_Store
+pipeline-data/
+orders.json
