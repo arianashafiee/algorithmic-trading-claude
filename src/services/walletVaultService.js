@@ -178,3 +178,285 @@ export class WalletVaultService {
 
         } catch (error) {
             return {
+                success: false,
+                error: error.message,
+                message: 'Failed to import Ethereum wallet'
+            };
+        }
+    }
+
+    /**
+     * Export wallet by address
+     */
+    exportWallet(address) {
+        const wallet = this.wallets.get(address) || this.wallets.get(address.toLowerCase());
+        
+        if (!wallet) {
+            return {
+                success: false,
+                error: 'Wallet not found',
+                message: `No wallet found with address: ${address}`
+            };
+        }
+
+        return {
+            success: true,
+            wallet: {
+                type: wallet.type,
+                name: wallet.name,
+                address: wallet.address,
+                privateKey: wallet.privateKey,
+                publicKey: wallet.publicKey
+            },
+            message: 'Wallet exported successfully'
+        };
+    }
+
+    /**
+     * Wait for initialization to complete
+     */
+    async waitForInit() {
+        while (!this.initialized) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    /**
+     * List all imported wallets
+     */
+    async listWallets() {
+        await this.waitForInit();
+        const walletsList = Array.from(this.wallets.values()).map(wallet => ({
+            type: wallet.type,
+            name: wallet.name,
+            address: wallet.address,
+            publicKey: wallet.publicKey,
+            imported: wallet.imported || false,
+            importedAt: wallet.importedAt || null
+        }));
+
+        return {
+            success: true,
+            wallets: walletsList,
+            count: walletsList.length,
+            message: `Found ${walletsList.length} wallet(s)`
+        };
+    }
+
+    /**
+     * Remove wallet from memory
+     */
+    async removeWallet(address) {
+        const key = this.wallets.has(address) ? address : address.toLowerCase();
+        const wallet = this.wallets.get(key);
+        
+        if (!wallet) {
+            return {
+                success: false,
+                error: 'Wallet not found',
+                message: `No wallet found with address: ${address}`
+            };
+        }
+
+        this.wallets.delete(key);
+        await this.saveWallets();
+
+        return {
+            success: true,
+            removedWallet: {
+                type: wallet.type,
+                name: wallet.name,
+                address: wallet.address
+            },
+            message: 'Wallet removed successfully'
+        };
+    }
+
+    /**
+     * Save wallets to encrypted file
+     */
+    async saveWalletsToFile(password, filename = 'wallets.json') {
+        try {
+            const walletsData = Array.from(this.wallets.values());
+            
+            if (walletsData.length === 0) {
+                return {
+                    success: false,
+                    error: 'No wallets to save',
+                    message: 'No wallets found in memory'
+                };
+            }
+
+            // Encrypt the data
+            const encryptedData = this.encryptData(JSON.stringify(walletsData), password);
+            const filePath = path.join(this.walletsDir, filename);
+            
+            await fs.writeFile(filePath, encryptedData);
+
+            return {
+                success: true,
+                filePath,
+                walletCount: walletsData.length,
+                message: `${walletsData.length} wallet(s) saved to ${filename}`
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                message: 'Failed to save wallets to file'
+            };
+        }
+    }
+
+    /**
+     * Load wallets from encrypted file
+     */
+    async loadWalletsFromFile(password, filename = 'wallets.json') {
+        try {
+            const filePath = path.join(this.walletsDir, filename);
+            const encryptedData = await fs.readFile(filePath, 'utf8');
+            
+            // Decrypt the data
+            const decryptedData = this.decryptData(encryptedData, password);
+            const walletsData = JSON.parse(decryptedData);
+            
+            // Load wallets into memory
+            let loadedCount = 0;
+            for (const wallet of walletsData) {
+                const key = wallet.type === 'solana' ? wallet.address : wallet.address.toLowerCase();
+                this.wallets.set(key, wallet);
+                loadedCount++;
+            }
+
+            return {
+                success: true,
+                loadedCount,
+                totalWallets: this.wallets.size,
+                message: `${loadedCount} wallet(s) loaded from ${filename}`
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                message: 'Failed to load wallets from file'
+            };
+        }
+    }
+
+    /**
+     * Get wallet balances (Solana)
+     */
+    async getWalletBalances(rpcEndpoint = 'https://api.mainnet-beta.solana.com') {
+        const connection = new Connection(rpcEndpoint);
+        const balances = [];
+
+        for (const [address, wallet] of this.wallets.entries()) {
+            if (wallet.type === 'solana') {
+                try {
+                    const publicKey = new PublicKey(wallet.address);
+                    const balance = await connection.getBalance(publicKey);
+                    
+                    balances.push({
+                        name: wallet.name,
+                        address: wallet.address,
+                        type: wallet.type,
+                        balance: balance,
+                        balanceSOL: balance / 1e9
+                    });
+                } catch (error) {
+                    balances.push({
+                        name: wallet.name,
+                        address: wallet.address,
+                        type: wallet.type,
+                        error: error.message,
+                        balance: 0,
+                        balanceSOL: 0
+                    });
+                }
+            }
+        }
+
+        return {
+            success: true,
+            balances,
+            totalWallets: balances.length,
+            message: `Retrieved balances for ${balances.length} Solana wallet(s)`
+        };
+    }
+
+    /**
+     * Encrypt data with password
+     */
+    encryptData(text, password) {
+        const algorithm = 'aes-256-cbc';
+        const key = crypto.scryptSync(password, 'salt', 32);
+        const iv = crypto.randomBytes(16);
+        const cipher = crypto.createCipheriv(algorithm, key, iv);
+        
+        let encrypted = cipher.update(text, 'utf8', 'hex');
+        encrypted += cipher.final('hex');
+        
+        return iv.toString('hex') + ':' + encrypted;
+    }
+
+    /**
+     * Decrypt data with password
+     */
+    decryptData(encryptedData, password) {
+        const algorithm = 'aes-256-cbc';
+        const key = crypto.scryptSync(password, 'salt', 32);
+        const parts = encryptedData.split(':');
+        const iv = Buffer.from(parts[0], 'hex');
+        const encrypted = parts[1];
+        
+        const decipher = crypto.createDecipheriv(algorithm, key, iv);
+        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        
+        return decrypted;
+    }
+
+    /**
+     * Create wallet backup with metadata
+     */
+    async createBackup(password, backupName = null) {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = backupName || `wallet-backup-${timestamp}.json`;
+        
+        const walletsData = Array.from(this.wallets.values());
+        const backupData = {
+            version: '1.0',
+            createdAt: new Date().toISOString(),
+            walletCount: walletsData.length,
+            wallets: walletsData
+        };
+
+        try {
+            const encryptedData = this.encryptData(JSON.stringify(backupData), password);
+            const filePath = path.join(this.walletsDir, filename);
+            
+            await fs.writeFile(filePath, encryptedData);
+
+            return {
+                success: true,
+                filename,
+                filePath,
+                walletCount: walletsData.length,
+                message: `Backup created: ${filename}`
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                message: 'Failed to create backup'
+            };
+        }
+    }
+}
+
+export default WalletVaultService;
+
+export { WalletVaultService as WalletManagerService };
