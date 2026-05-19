@@ -34,6 +34,69 @@ export const TOOL_NAMES = {
   GET_RECENTLY_UPDATED_TOKENS: "get_recently_updated_tokens",
   GET_POOL_OHLCV: "get_pool_ohlcv",
   GET_POOL_TRADES: "get_pool_trades",
+
+  // Portfolio API Tools
+  GET_PORTFOLIO_TOKENS: "get_portfolio_tokens",
+  GET_PORTFOLIO_BALANCES: "get_portfolio_balances",
+  GET_PORTFOLIO_TRANSACTIONS: "get_portfolio_transactions",
+
+  // Conversion Utility Tools
+  CONVERT_WEI_TO_FORMATTED: "convert_wei_to_formatted",
+  CONVERT_FORMATTED_TO_WEI: "convert_formatted_to_wei",
+
+  // Solana Tools
+  GET_SOLANA_BALANCE: "get_solana_balance",
+  TRANSFER_SOL: "transfer_sol",
+  GET_SOLANA_ACCOUNT_INFO: "get_solana_account_info",
+  GET_SOLANA_TRANSACTION_STATUS: "get_solana_transaction_status", 
+  GET_SOLANA_TRANSACTION_DETAILS: "get_solana_transaction_details",
+  AIRDROP_SOL: "airdrop_sol",
+  GET_SOLANA_SUPPORTED_CLUSTERS: "get_solana_supported_clusters",
+  GET_SOLANA_SLOT: "get_solana_slot",
+  GET_SOLANA_EPOCH_INFO: "get_solana_epoch_info",
+  GET_SOLANA_CLUSTER_NODES: "get_solana_cluster_nodes",
+  GET_SOLANA_WALLET_ADDRESS: "get_solana_wallet_address",
+
+  // Advanced Solana DEX Trading Tools
+  SWAP_ON_SOLANA_DEX: "swap_on_solana_dex",
+  GET_SOLANA_DEX_QUOTE: "get_solana_dex_quote",
+  CREATE_SOLANA_LIMIT_ORDER: "create_solana_limit_order",
+  GET_SOLANA_LIMIT_ORDERS: "get_solana_limit_orders",
+  CANCEL_SOLANA_LIMIT_ORDER: "cancel_solana_limit_order",
+
+  // Memecoin Trading Tools
+  GET_PUMPFUN_TRENDING: "get_pumpfun_trending",
+  GET_PUMPFUN_TOKEN: "get_pumpfun_token",
+  QUICK_BUY_MEMECOIN: "quick_buy_memecoin",
+  SCAN_NEW_MEMECOINS: "scan_new_memecoins",
+
+  // PumpFun Bot Tools
+  START_PUMPFUN_BOT: "start_pumpfun_bot",
+  STOP_PUMPFUN_BOT: "stop_pumpfun_bot",
+  PUMPFUN_AUTO_BUY: "pumpfun_auto_buy",
+  PUMPFUN_QUICK_SNIPE: "pumpfun_quick_snipe",
+  SET_PUMPFUN_FILTERS: "set_pumpfun_filters",
+  GET_PUMPFUN_BOT_STATUS: "get_pumpfun_bot_status",
+
+  // Market Maker Tools
+  INITIALIZE_MARKET_MAKER: "initialize_market_maker",
+  START_MARKET_MAKER: "start_market_maker",
+  STOP_MARKET_MAKER: "stop_market_maker",
+  GET_MARKET_MAKER_STATUS: "get_market_maker_status",
+  UPDATE_MARKET_MAKER_CONFIG: "update_market_maker_config",
+  GET_MARKET_MAKER_STATS: "get_market_maker_stats",
+
+  // Wallet Management Tools
+  GENERATE_WALLET: "generate_wallet",
+  IMPORT_WALLET: "import_wallet",
+  EXPORT_WALLET: "export_wallet",
+  LIST_WALLETS: "list_wallets",
+  REMOVE_WALLET: "remove_wallet",
+  GET_WALLET_BALANCES: "get_wallet_balances",
+  SAVE_WALLETS_TO_FILE: "save_wallets_to_file",
+  LOAD_WALLETS_FROM_FILE: "load_wallets_from_file",
+  CREATE_WALLET_BACKUP: "create_wallet_backup",
 };
 
+// Aggregator Server Configuration
 export const AG_URL = "http://44.252.136.98";

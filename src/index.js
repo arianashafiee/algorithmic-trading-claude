@@ -632,6 +632,345 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["network", "poolAddress"],
         },
       },
+      {
+        name: TOOL_NAMES.GET_GASLESS_PRICE,
+        description:
+          "Get indicative price for a gasless token swap (no gas fees required)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            chainId: {
+              type: "integer",
+              description: "Blockchain ID (e.g., 8453 for Base)",
+            },
+            buyToken: {
+              type: "string",
+              description: "Contract address of token to buy",
+            },
+            sellToken: {
+              type: "string",
+              description: "Contract address of token to sell",
+            },
+            sellAmount: {
+              type: "string",
+              description: "Amount of sellToken in base units",
+            },
+            taker: {
+              type: "string",
+              description: "Address executing the trade (optional)",
+            },
+            slippageBps: {
+              type: "integer",
+              description:
+                "Maximum acceptable slippage in basis points (optional, min: 30)",
+            },
+          },
+          required: ["chainId", "buyToken", "sellToken", "sellAmount"],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_GASLESS_QUOTE,
+        description:
+          "Get executable quote for a gasless token swap with EIP-712 signature data",
+        inputSchema: {
+          type: "object",
+          properties: {
+            chainId: {
+              type: "integer",
+              description: "Blockchain ID (e.g., 8453 for Base)",
+            },
+            buyToken: {
+              type: "string",
+              description: "Contract address of token to buy",
+            },
+            sellToken: {
+              type: "string",
+              description: "Contract address of token to sell",
+            },
+            sellAmount: {
+              type: "string",
+              description: "Amount of sellToken in base units",
+            },
+            taker: {
+              type: "string",
+              description:
+                "Address executing the trade (required for gasless quotes, uses USER_ADDRESS from env if not provided)",
+            },
+            slippageBps: {
+              type: "integer",
+              description:
+                "Maximum acceptable slippage in basis points (optional, min: 30)",
+            },
+          },
+          required: ["chainId", "buyToken", "sellToken", "sellAmount"],
+        },
+      },
+      {
+        name: TOOL_NAMES.SUBMIT_GASLESS_SWAP,
+        description:
+          "Submit a gasless swap by signing approval and trade messages (no gas fees required)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            quoteData: {
+              type: "object",
+              description: "Quote data from get_gasless_quote",
+            },
+            chainId: {
+              type: "integer",
+              description: "Blockchain ID (optional if included in quoteData)",
+            },
+          },
+          required: ["quoteData"],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_GASLESS_STATUS,
+        description: "Get the status of a submitted gasless swap",
+        inputSchema: {
+          type: "object",
+          properties: {
+            tradeHash: {
+              type: "string",
+              description: "Trade hash from gasless swap submission",
+            },
+            chainId: {
+              type: "integer",
+              description: "Blockchain ID where the trade was submitted",
+            },
+          },
+          required: ["tradeHash", "chainId"],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_GASLESS_CHAINS,
+        description:
+          "Get list of blockchain networks that support gasless swaps",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_GASLESS_APPROVAL_TOKENS,
+        description:
+          "Get list of tokens that support gasless approvals (EIP-2612 permit)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            chainId: {
+              type: "integer",
+              description:
+                "Blockchain ID (e.g., 8453 for Base, defaults to 8453 if not provided)",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_PORTFOLIO_TOKENS,
+        description:
+          "Get tokens with balances, prices, and metadata for wallet addresses (uses USER_ADDRESS from env if addresses not provided)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            addresses: {
+              type: "array",
+              description:
+                "Array of address and networks pairs (max 3 addresses, max 20 networks each). Optional - uses USER_ADDRESS from env if not provided",
+              items: {
+                type: "object",
+                properties: {
+                  address: {
+                    type: "string",
+                    description: "Wallet address",
+                  },
+                  networks: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                    description:
+                      "Network identifiers (e.g., 'eth-mainnet', 'base-mainnet')",
+                  },
+                },
+                required: ["address", "networks"],
+              },
+            },
+            networks: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+              description:
+                "Network identifiers to use with USER_ADDRESS (e.g., 'eth-mainnet', 'base-mainnet'). Only used when addresses not provided. Defaults to ['eth-mainnet', 'base-mainnet']",
+            },
+            withMetadata: {
+              type: "boolean",
+              description: "Include token metadata (optional, default: true)",
+            },
+            withPrices: {
+              type: "boolean",
+              description: "Include token prices (optional, default: true)",
+            },
+            includeNativeTokens: {
+              type: "boolean",
+              description:
+                "Include native tokens like ETH (optional, default: false)",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_PORTFOLIO_BALANCES,
+        description:
+          "Get token balances for wallet addresses (faster, no prices/metadata, uses USER_ADDRESS from env if addresses not provided)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            addresses: {
+              type: "array",
+              description:
+                "Array of address and networks pairs (max 3 addresses, max 20 networks each). Optional - uses USER_ADDRESS from env if not provided",
+              items: {
+                type: "object",
+                properties: {
+                  address: {
+                    type: "string",
+                    description: "Wallet address",
+                  },
+                  networks: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                    description:
+                      "Network identifiers (e.g., 'eth-mainnet', 'base-mainnet')",
+                  },
+                },
+                required: ["address", "networks"],
+              },
+            },
+            networks: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+              description:
+                "Network identifiers to use with USER_ADDRESS (e.g., 'eth-mainnet', 'base-mainnet'). Only used when addresses not provided. Defaults to ['eth-mainnet', 'base-mainnet']",
+            },
+            includeNativeTokens: {
+              type: "boolean",
+              description:
+                "Include native tokens like ETH (optional, default: false)",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_PORTFOLIO_TRANSACTIONS,
+        description:
+          "Get transaction history for a wallet address (BETA: 1 address, ETH/BASE only, uses USER_ADDRESS from env if addresses not provided)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            addresses: {
+              type: "array",
+              description:
+                "Array with single address and networks (BETA limitation: 1 address, max 2 networks). Optional - uses USER_ADDRESS from env if not provided",
+              items: {
+                type: "object",
+                properties: {
+                  address: {
+                    type: "string",
+                    description: "Wallet address",
+                  },
+                  networks: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      enum: ["eth-mainnet", "base-mainnet"],
+                    },
+                    description:
+                      "Network identifiers (BETA: only eth-mainnet and base-mainnet supported)",
+                  },
+                },
+                required: ["address", "networks"],
+              },
+              maxItems: 1,
+            },
+            networks: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["eth-mainnet", "base-mainnet"],
+              },
+              description:
+                "Network identifiers to use with USER_ADDRESS (BETA: only eth-mainnet and base-mainnet supported). Only used when addresses not provided. Defaults to ['eth-mainnet', 'base-mainnet']",
+            },
+            before: {
+              type: "string",
+              description:
+                "Cursor for pagination - get results before this cursor (optional)",
+            },
+            after: {
+              type: "string",
+              description:
+                "Cursor for pagination - get results after this cursor (optional)",
+            },
+            limit: {
+              type: "integer",
+              description:
+                "Number of transactions to return (optional, default: 25, max: 50)",
+              minimum: 1,
+              maximum: 50,
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.CONVERT_WEI_TO_FORMATTED,
+        description:
+          "Convert wei amounts to human-readable format using ethers.js",
+        inputSchema: {
+          type: "object",
+          properties: {
+            amount: {
+              type: "string",
+              description: "Amount in wei (as string to handle large numbers)",
+            },
+            decimals: {
+              type: "integer",
+              description:
+                "Number of decimal places for the token (e.g., 18 for ETH, 6 for USDC)",
+            },
+          },
+          required: ["amount", "decimals"],
+        },
+      },
+      {
+        name: TOOL_NAMES.CONVERT_FORMATTED_TO_WEI,
+        description: "Convert formatted amounts to wei using ethers.js",
+        inputSchema: {
+          type: "object",
+          properties: {
+            amount: {
+              type: "string",
+              description: "Formatted amount (e.g., '1.5' for 1.5 ETH)",
+            },
+            decimals: {
+              type: "integer",
+              description:
+                "Number of decimal places for the token (e.g., 18 for ETH, 6 for USDC)",
+            },
+          },
+          required: ["amount", "decimals"],
+        },
+      },
     ],
   };
 });
@@ -796,6 +1135,50 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               args.trade_volume_in_usd_greater_than,
           }
         );
+        break;
+
+      case TOOL_NAMES.GET_GASLESS_PRICE:
+        result = await toolService.getGaslessPrice(args);
+        break;
+
+      case TOOL_NAMES.GET_GASLESS_QUOTE:
+        result = await toolService.getGaslessQuote(args);
+        break;
+
+      case TOOL_NAMES.SUBMIT_GASLESS_SWAP:
+        result = await toolService.submitGaslessSwap(args);
+        break;
+
+      case TOOL_NAMES.GET_GASLESS_STATUS:
+        result = await toolService.getGaslessStatus(args);
+        break;
+
+      case TOOL_NAMES.GET_GASLESS_CHAINS:
+        result = await toolService.getGaslessChains();
+        break;
+
+      case TOOL_NAMES.GET_GASLESS_APPROVAL_TOKENS:
+        result = await toolService.getGaslessApprovalTokens(args);
+        break;
+
+      case TOOL_NAMES.GET_PORTFOLIO_TOKENS:
+        result = await toolService.getPortfolioTokens(args);
+        break;
+
+      case TOOL_NAMES.GET_PORTFOLIO_BALANCES:
+        result = await toolService.getPortfolioBalances(args);
+        break;
+
+      case TOOL_NAMES.GET_PORTFOLIO_TRANSACTIONS:
+        result = await toolService.getPortfolioTransactions(args);
+        break;
+
+      case TOOL_NAMES.CONVERT_WEI_TO_FORMATTED:
+        result = await toolService.convertWeiToFormatted(args);
+        break;
+
+      case TOOL_NAMES.CONVERT_FORMATTED_TO_WEI:
+        result = await toolService.convertFormattedToWei(args);
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);
