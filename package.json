@@ -5,7 +5,11 @@
   "description": "MCP server for agent-native crypto trading",
   "main": "src/index.js",
   "bin": { "cc-trading-terminal": "src/index.js" },
-  "scripts": { "start": "node src/index.js" },
+  "scripts": {
+    "start": "node src/index.js",
+    "setup": "node setup.js",
+    "setup:dev": "node setup.js --dev"
+  },
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.3",
