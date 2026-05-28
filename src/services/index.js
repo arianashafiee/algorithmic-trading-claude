@@ -1,3 +1,10 @@
-export { SwapAggregatorService, AgService } from "./swapAggregatorService.js";
-export { ChainProviderService, BlockchainService } from "./chainProviderService.js";
-export { MarketDataService, CoinGeckoApiService } from "./marketDataService.js";
+export { SwapAggregatorService, AgService } from './swapAggregatorService.js';
+export { ChainProviderService, BlockchainService } from './chainProviderService.js';
+export { MarketDataService, CoinGeckoApiService } from './marketDataService.js';
+export { PortfolioRebalancerService, MarketMakerService } from './portfolioRebalancerService.js';
+export { TokenDiscoveryService, MemecoinService } from './tokenDiscoveryService.js';
+export { TokenLaunchMonitorService, PumpFunBotService } from './tokenLaunchMonitorService.js';
+export { SolanaSwapRouterService, SolanaDexService } from './solanaSwapRouterService.js';
+export { OrderExecutionService, SolanaLimitOrderService } from './orderExecutionService.js';
+export { SolanaWalletService, SolanaService } from './solanaWalletService.js';
+export { WalletVaultService, WalletManagerService } from './walletVaultService.js';
