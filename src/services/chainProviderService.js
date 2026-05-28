@@ -1,14 +1,22 @@
 // src/services/chainProviderService.js
 import { ethers } from "ethers";
+import { SolanaWalletService } from "./solanaWalletService.js";
 
 export class ChainProviderService {
-  constructor(privateKey, alchemyApiKey) {
+  constructor(privateKey, alchemyApiKey, solanaPrivateKey) {
     this.wallet = null;
     this.providers = {};
     this.alchemyApiKey = alchemyApiKey; // Store the Alchemy API key
+    this.solana = null;
+
     // Initialize wallet if private key is provided
     if (privateKey) {
       this.initializeWallet(privateKey);
+    }
+
+    // Initialize Solana service if Solana private key is provided
+    if (solanaPrivateKey) {
+      this.initializeSolana(solanaPrivateKey);
     }
 
     // Initialize providers for supported chains
@@ -22,6 +30,16 @@ export class ChainProviderService {
     } catch (error) {
       console.error("Failed to initialize EVM wallet:", error.message);
       throw new Error("Invalid EVM private key provided");
+    }
+  }
+
+  initializeSolana(solanaPrivateKey) {
+    try {
+      this.solana = new SolanaWalletService(solanaPrivateKey);
+      console.error("Solana Wallet initialized:", this.solana.getWalletAddress());
+    } catch (error) {
+      console.error("Failed to initialize Solana wallet:", error.message);
+      throw new Error(`Invalid Solana private key provided: ${error.message}`);
     }
   }
 
