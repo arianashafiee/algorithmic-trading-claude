@@ -23,11 +23,23 @@ export class ToolService {
   ) {
     this.agg = new AgService(agUrl);
     this.coinGeckoApi = new CoinGeckoApiService(coinGeckoApiKey);
-    this.blockchain = new BlockchainService(userPrivateKey, alchemyApiKey);
+    this.blockchain = new BlockchainService(userPrivateKey, alchemyApiKey, solanaPrivateKey);
     this.userPrivateKey = userPrivateKey;
     this.userAddress = userAddress;
     this.solanaPrivateKey = solanaPrivateKey;
-      }
+
+    // Initialize advanced Solana trading services
+    if (solanaPrivateKey && this.blockchain.solana) {
+      this.solanaDex = new SolanaDexService(this.blockchain.solana);
+      this.solanaLimitOrders = new SolanaLimitOrderService(this.blockchain.solana, this.solanaDex);
+      this.memecoinService = new MemecoinService(this.blockchain.solana, this.solanaDex);
+      this.pumpFunBot = new PumpFunBotService(this.blockchain.solana);
+      this.marketMaker = new MarketMakerService();
+    }
+    
+    // Initialize wallet manager service
+    this.walletManager = new WalletManagerService();
+  }
 
   async getSwapPrice(params) {
     // Validate required parameters
@@ -817,4 +829,1056 @@ export class ToolService {
   }
 
   // Solana Methods
+  async getSolanaBalance(params = {}) {
+    const { cluster = 'mainnet-beta', address } = params;
+
+    try {
+      const result = await this.blockchain.getSolanaBalance(cluster, address);
+
+      return {
+        message: "Solana balance retrieved successfully",
+        data: result,
+        summary: `Balance: ${result.balanceSOL} SOL (${result.balance} lamports) on ${cluster}`,
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`Failed to get Solana balance: ${error.message}`);
+    }
+  }
+
+  async transferSOL(params) {
+    const { toAddress, amount, cluster = 'mainnet-beta' } = params;
+
+    if (!toAddress || amount === undefined) {
+      throw new Error("Missing required parameters: toAddress, amount");
+    }
+
+    if (!this.solanaPrivateKey) {
+      throw new Error("Solana private key is required for SOL transfers");
+    }
+
+    try {
+      const result = await this.blockchain.transferSOL(toAddress, amount, cluster);
+
+      return {
+        message: "SOL transfer completed successfully",
+        data: result,
+        summary: `Transferred ${amount} SOL to ${toAddress}`,
+        nextSteps: [
+          "1. Transaction has been confirmed on the Solana blockchain",
+          "2. Check the transaction on Solana explorer",
+          `3. Transaction signature: ${result.signature}`
+        ],
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`SOL transfer failed: ${error.message}`);
+    }
+  }
+
+  async getSolanaAccountInfo(params) {
+    const { address, cluster = 'mainnet-beta' } = params;
+
+    if (!address) {
+      throw new Error("address is required");
+    }
+
+    try {
+      const result = await this.blockchain.getSolanaAccountInfo(address, cluster);
+
+      return {
+        message: "Solana account info retrieved successfully",
+        data: result,
+        summary: result.exists 
+          ? `Account exists with ${result.lamports} lamports, owner: ${result.owner}`
+          : "Account does not exist",
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`Failed to get Solana account info: ${error.message}`);
+    }
+  }
+
+  async getSolanaTransactionStatus(params) {
+    const { signature, cluster = 'mainnet-beta' } = params;
+
+    if (!signature) {
+      throw new Error("signature is required");
+    }
+
+    try {
+      const result = await this.blockchain.getSolanaTransactionStatus(signature, cluster);
+
+      return {
+        message: "Solana transaction status retrieved successfully",
+        data: result,
+        summary: `Transaction status: ${result.status}${result.confirmations ? ` (${result.confirmations} confirmations)` : ''}`,
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`Failed to get Solana transaction status: ${error.message}`);
+    }
+  }
+
+  async getSolanaTransactionDetails(params) {
+    const { signature, cluster = 'mainnet-beta' } = params;
+
+    if (!signature) {
+      throw new Error("signature is required");
+    }
+
+    try {
+      const result = await this.blockchain.getSolanaTransactionDetails(signature, cluster);
+
+      return {
+        message: "Solana transaction details retrieved successfully",
+        data: result,
+        summary: result.found 
+          ? `Transaction found: ${result.success ? 'Success' : 'Failed'}, Fee: ${result.fee} lamports`
+          : "Transaction not found",
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`Failed to get Solana transaction details: ${error.message}`);
+    }
+  }
+
+  async airdropSOL(params = {}) {
+    const { amount = 1, cluster = 'devnet' } = params;
+
+    if (cluster === 'mainnet-beta') {
+      throw new Error("Airdrop is not available on mainnet-beta");
+    }
+
+    if (!this.solanaPrivateKey) {
+      throw new Error("Solana private key is required for airdrops");
+    }
+
+    try {
+      const result = await this.blockchain.airdropSOL(amount, cluster);
+
+      return {
+        message: "SOL airdrop completed successfully",
+        data: result,
+        summary: `Airdropped ${amount} SOL on ${cluster}`,
+        nextSteps: [
+          "1. SOL has been added to your wallet",
+          "2. Check your balance with get_solana_balance tool",
+          `3. Transaction signature: ${result.signature}`
+        ],
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`SOL airdrop failed: ${error.message}`);
+    }
+  }
+
+  async getSolanaSupportedClusters() {
+    try {
+      const clusters = this.blockchain.getSupportedSolanaClusters();
+
+      return {
+        message: "Supported Solana clusters retrieved successfully",
+        data: { clusters },
+        summary: `Found ${clusters.length} supported Solana clusters`,
+        clusters: clusters
+      };
+    } catch (error) {
+      throw new Error(`Failed to get supported Solana clusters: ${error.message}`);
+    }
+  }
+
+  async getSolanaSlot(params = {}) {
+    const { cluster = 'mainnet-beta' } = params;
+
+    try {
+      const result = await this.blockchain.getSolanaSlot(cluster);
+
+      return {
+        message: "Solana slot information retrieved successfully",
+        data: result,
+        summary: `Current slot: ${result.slot} on ${cluster}`,
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`Failed to get Solana slot: ${error.message}`);
+    }
+  }
+
+  async getSolanaEpochInfo(params = {}) {
+    const { cluster = 'mainnet-beta' } = params;
+
+    try {
+      const result = await this.blockchain.getSolanaEpochInfo(cluster);
+
+      return {
+        message: "Solana epoch info retrieved successfully",
+        data: result,
+        summary: `Epoch ${result.epoch}: ${result.slotIndex}/${result.slotsInEpoch} slots, Block height: ${result.blockHeight}`,
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`Failed to get Solana epoch info: ${error.message}`);
+    }
+  }
+
+  async getSolanaClusterNodes(params = {}) {
+    const { cluster = 'mainnet-beta' } = params;
+
+    try {
+      const result = await this.blockchain.getSolanaClusterNodes(cluster);
+
+      return {
+        message: "Solana cluster nodes retrieved successfully",
+        data: result,
+        summary: `Found ${result.count} active nodes on ${cluster}`,
+        cluster: cluster
+      };
+    } catch (error) {
+      throw new Error(`Failed to get Solana cluster nodes: ${error.message}`);
+    }
+  }
+
+  getSolanaWalletAddress() {
+    const address = this.blockchain.getSolanaWalletAddress();
+    
+    if (!address) {
+      return {
+        message: "No Solana wallet configured",
+        data: null,
+        summary: "Solana private key not provided",
+        note: "Set SOLANA_PRIVATE_KEY environment variable to use Solana functions"
+      };
+    }
+
+    return {
+      message: "Solana wallet address retrieved successfully",
+      data: { address },
+      summary: `Solana wallet address: ${address}`,
+      address: address
+    };
+  }
+
+  // Advanced Solana DEX Trading Methods
+  async swapOnSolanaDex(params) {
+    const { inputToken, outputToken, amount, platform = 'auto', slippageBps = 50 } = params;
+
+    if (!inputToken || !outputToken || !amount) {
+      throw new Error("Missing required parameters: inputToken, outputToken, amount");
+    }
+
+    if (!this.solanaDex) {
+      throw new Error("Solana DEX service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      let result;
+      const formattedAmount = this.solanaDex.formatAmount(amount);
+
+      if (platform === 'auto') {
+        result = await this.solanaDex.executeSwapOnBestDex(
+          this.solanaDex.getTokenAddress(inputToken),
+          this.solanaDex.getTokenAddress(outputToken),
+          formattedAmount,
+          slippageBps
+        );
+      } else {
+        // Execute on specific platform
+        const quote = platform === 'jupiter' 
+          ? await this.solanaDex.getJupiterQuote(
+              this.solanaDex.getTokenAddress(inputToken),
+              this.solanaDex.getTokenAddress(outputToken),
+              formattedAmount,
+              slippageBps
+            )
+          : await this.solanaDex.getRaydiumQuote(
+              this.solanaDex.getTokenAddress(inputToken),
+              this.solanaDex.getTokenAddress(outputToken),
+              formattedAmount,
+              slippageBps / 100
+            );
+
+        result = platform === 'jupiter'
+          ? await this.solanaDex.executeJupiterSwap(quote)
+          : await this.solanaDex.executeRaydiumSwap(quote);
+      }
+
+      return {
+        message: "Solana DEX swap completed successfully",
+        data: result,
+        summary: `Swapped ${amount} ${inputToken} for ${this.solanaDex.formatPrice(result.outAmount)} ${outputToken} on ${result.platform}`,
+        nextSteps: [
+          "1. Transaction confirmed on Solana blockchain",
+          "2. Check transaction on Solana explorer",
+          `3. Transaction signature: ${result.signature}`
+        ]
+      };
+    } catch (error) {
+      throw new Error(`Solana DEX swap failed: ${error.message}`);
+    }
+  }
+
+  async getSolanaDexQuote(params) {
+    const { inputToken, outputToken, amount, platform = 'auto', slippageBps = 50 } = params;
+
+    if (!inputToken || !outputToken || !amount) {
+      throw new Error("Missing required parameters: inputToken, outputToken, amount");
+    }
+
+    if (!this.solanaDex) {
+      throw new Error("Solana DEX service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const formattedAmount = this.solanaDex.formatAmount(amount);
+      let result;
+
+      if (platform === 'auto') {
+        result = await this.solanaDex.getBestQuote(
+          this.solanaDex.getTokenAddress(inputToken),
+          this.solanaDex.getTokenAddress(outputToken),
+          formattedAmount,
+          slippageBps
+        );
+      } else {
+        const quote = platform === 'jupiter'
+          ? await this.solanaDex.getJupiterQuote(
+              this.solanaDex.getTokenAddress(inputToken),
+              this.solanaDex.getTokenAddress(outputToken),
+              formattedAmount,
+              slippageBps
+            )
+          : await this.solanaDex.getRaydiumQuote(
+              this.solanaDex.getTokenAddress(inputToken),
+              this.solanaDex.getTokenAddress(outputToken),
+              formattedAmount,
+              slippageBps / 100
+            );
+
+        result = { bestQuote: quote, allQuotes: [quote] };
+      }
+
+      return {
+        message: "Solana DEX quote retrieved successfully",
+        data: result,
+        summary: `Best rate: ${this.solanaDex.formatPrice(result.bestQuote.outAmount)} ${outputToken} for ${amount} ${inputToken} on ${result.bestQuote.platform}`
+      };
+    } catch (error) {
+      throw new Error(`Solana DEX quote failed: ${error.message}`);
+    }
+  }
+
+  // Limit Order Methods
+  async createSolanaLimitOrder(params) {
+    const { type, inputToken, outputToken, amount, targetPrice, slippageBps = 100, expiry, platform = 'auto' } = params;
+
+    if (!type || !inputToken || !outputToken || !amount || !targetPrice) {
+      throw new Error("Missing required parameters: type, inputToken, outputToken, amount, targetPrice");
+    }
+
+    if (!this.solanaLimitOrders) {
+      throw new Error("Solana limit order service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.solanaLimitOrders.createLimitOrder({
+        type,
+        inputToken,
+        outputToken,
+        amount,
+        targetPrice,
+        slippageBps,
+        expiry,
+        platform
+      });
+
+      return {
+        message: "Limit order created successfully",
+        data: result,
+        summary: `${type} order: ${amount} ${inputToken} at ${targetPrice} ${outputToken} each`,
+        nextSteps: [
+          "1. Limit order is now monitoring market prices",
+          "2. Order will execute automatically when target price is reached",
+          "3. Check order status with get_solana_limit_orders tool"
+        ]
+      };
+    } catch (error) {
+      throw new Error(`Limit order creation failed: ${error.message}`);
+    }
+  }
+
+  async getSolanaLimitOrders(params = {}) {
+    const { status = 'all' } = params;
+
+    if (!this.solanaLimitOrders) {
+      throw new Error("Solana limit order service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.solanaLimitOrders.getLimitOrders(status);
+
+      return {
+        message: "Limit orders retrieved successfully",
+        data: result,
+        summary: `Found ${result.count} limit orders (${status}), monitoring: ${result.monitoring ? 'active' : 'inactive'}`
+      };
+    } catch (error) {
+      throw new Error(`Failed to get limit orders: ${error.message}`);
+    }
+  }
+
+  async cancelSolanaLimitOrder(params) {
+    const { orderId } = params;
+
+    if (!orderId) {
+      throw new Error("Missing required parameter: orderId");
+    }
+
+    if (!this.solanaLimitOrders) {
+      throw new Error("Solana limit order service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.solanaLimitOrders.cancelLimitOrder(orderId);
+
+      return {
+        message: "Limit order cancelled successfully",
+        data: result,
+        summary: `Order ${orderId} has been cancelled`
+      };
+    } catch (error) {
+      throw new Error(`Failed to cancel limit order: ${error.message}`);
+    }
+  }
+
+  // Memecoin Trading Methods
+  async getPumpfunTrending(params = {}) {
+    const { limit = 50, sortBy = 'created_timestamp', includeNsfw = false } = params;
+
+    if (!this.memecoinService) {
+      throw new Error("Memecoin service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.memecoinService.getPumpFunTrending(limit, sortBy, includeNsfw);
+
+      return {
+        message: "PumpFun trending tokens retrieved successfully",
+        data: result,
+        summary: `Found ${result.count} trending memecoins on PumpFun`,
+        riskLevels: {
+          low: result.trending.filter(t => t.riskLevel === 'low').length,
+          medium: result.trending.filter(t => t.riskLevel === 'medium').length,
+          high: result.trending.filter(t => t.riskLevel === 'high').length
+        }
+      };
+    } catch (error) {
+      throw new Error(`Failed to get PumpFun trending: ${error.message}`);
+    }
+  }
+
+  async getPumpfunToken(params) {
+    const { mintAddress } = params;
+
+    if (!mintAddress) {
+      throw new Error("Missing required parameter: mintAddress");
+    }
+
+    if (!this.memecoinService) {
+      throw new Error("Memecoin service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.memecoinService.getPumpFunToken(mintAddress);
+
+      return {
+        message: "PumpFun token info retrieved successfully",
+        data: result,
+        summary: `${result.symbol}: $${result.marketCap?.toLocaleString()} market cap, ${result.holders} holders, ${result.riskLevel} risk`
+      };
+    } catch (error) {
+      throw new Error(`Failed to get PumpFun token: ${error.message}`);
+    }
+  }
+
+  async quickBuyMemecoin(params) {
+    const { tokenAddress, solAmount, riskLevel = 'medium', maxSlippage } = params;
+
+    if (!tokenAddress || !solAmount) {
+      throw new Error("Missing required parameters: tokenAddress, solAmount");
+    }
+
+    if (!this.memecoinService) {
+      throw new Error("Memecoin service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.memecoinService.quickBuyMemecoin({
+        tokenAddress,
+        solAmount,
+        riskLevel,
+        maxSlippage
+      });
+
+      return {
+        message: "Memecoin quick buy completed successfully",
+        data: result,
+        summary: `Bought ${result.tokenInfo.symbol || 'MEMECOIN'} for ${solAmount} SOL (${riskLevel} risk)`,
+        nextSteps: [
+          "1. Transaction confirmed on Solana blockchain",
+          "2. Monitor your position for profit opportunities", 
+          "3. Consider setting stop-loss orders for risk management",
+          `4. Transaction signature: ${result.signature}`
+        ]
+      };
+    } catch (error) {
+      throw new Error(`Memecoin quick buy failed: ${error.message}`);
+    }
+  }
+
+  async scanNewMemecoins(params = {}) {
+    if (!this.memecoinService) {
+      throw new Error("Memecoin service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.memecoinService.scanNewMemecoins(params);
+
+      return {
+        message: "Memecoin scan completed successfully",
+        data: result,
+        summary: `Found ${result.count} potential memecoins matching your criteria`,
+        topPicks: result.coins.slice(0, 5).map(coin => ({
+          symbol: coin.symbol,
+          marketCap: coin.marketCap,
+          score: coin.potentialScore,
+          riskLevel: coin.riskLevel
+        }))
+      };
+    } catch (error) {
+      throw new Error(`Memecoin scan failed: ${error.message}`);
+    }
+  }
+
+  // PumpFun Bot Tools
+  async startPumpfunBot(params = {}) {
+    if (!this.pumpFunBot) {
+      throw new Error("PumpFun bot service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    const { filters = {}, autoTrading = false } = params;
+
+    try {
+      await this.pumpFunBot.startListening(filters);
+      
+      if (autoTrading) {
+        await this.pumpFunBot.enableAutoTrading(autoTrading);
+      }
+
+      return {
+        message: "PumpFun bot started successfully",
+        data: this.pumpFunBot.getStatus(),
+        summary: "Now monitoring PumpFun for new token launches",
+        capabilities: [
+          "Real-time token launch detection",
+          "Configurable filtering system",
+          "Auto-trading with risk controls",
+          "Quick snipe functionality"
+        ]
+      };
+    } catch (error) {
+      throw new Error(`PumpFun bot startup failed: ${error.message}`);
+    }
+  }
+
+  async stopPumpfunBot() {
+    if (!this.pumpFunBot) {
+      throw new Error("PumpFun bot service not initialized");
+    }
+
+    try {
+      await this.pumpFunBot.stopListening();
+
+      return {
+        message: "PumpFun bot stopped successfully",
+        data: this.pumpFunBot.getStatus(),
+        summary: "Bot stopped monitoring token launches"
+      };
+    } catch (error) {
+      throw new Error(`PumpFun bot stop failed: ${error.message}`);
+    }
+  }
+
+  async pumpfunAutoBuy(params) {
+    const { tokenMint, solAmount, options = {} } = params;
+    
+    if (!tokenMint || !solAmount) {
+      throw new Error("Missing required parameters: tokenMint, solAmount");
+    }
+
+    if (!this.pumpFunBot) {
+      throw new Error("PumpFun bot service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.pumpFunBot.autoBuyToken(tokenMint, solAmount, options);
+
+      return {
+        message: "PumpFun auto-buy completed successfully",
+        data: result,
+        summary: `Bought ${solAmount} SOL worth of ${tokenMint}`,
+        transactionDetails: {
+          signature: result.signature,
+          timestamp: new Date(result.timestamp).toISOString(),
+          status: result.status
+        }
+      };
+    } catch (error) {
+      throw new Error(`PumpFun auto-buy failed: ${error.message}`);
+    }
+  }
+
+  async pumpfunQuickSnipe(params) {
+    const { tokenMint, solAmount = 0.1 } = params;
+    
+    if (!tokenMint) {
+      throw new Error("Missing required parameter: tokenMint");
+    }
+
+    if (!this.pumpFunBot) {
+      throw new Error("PumpFun bot service not initialized - provide SOLANA_PRIVATE_KEY");
+    }
+
+    try {
+      const result = await this.pumpFunBot.quickSnipe(tokenMint, solAmount);
+
+      return {
+        message: "PumpFun quick snipe completed successfully",
+        data: result,
+        summary: `Sniped ${tokenMint} with ${solAmount} SOL`,
+        warning: "Quick snipe uses high slippage and priority fees for speed",
+        transactionDetails: {
+          signature: result.signature,
+          timestamp: new Date(result.timestamp).toISOString(),
+          status: result.status
+        }
+      };
+    } catch (error) {
+      throw new Error(`PumpFun quick snipe failed: ${error.message}`);
+    }
+  }
+
+  async setPumpfunFilters(params) {
+    const filters = params;
+    
+    if (!this.pumpFunBot) {
+      throw new Error("PumpFun bot service not initialized");
+    }
+
+    try {
+      this.pumpFunBot.setFilters(filters);
+
+      return {
+        message: "PumpFun bot filters updated successfully",
+        data: this.pumpFunBot.getStatus(),
+        summary: "Bot will now use updated filtering criteria",
+        activeFilters: filters
+      };
+    } catch (error) {
+      throw new Error(`Filter update failed: ${error.message}`);
+    }
+  }
+
+  async getPumpfunBotStatus() {
+    if (!this.pumpFunBot) {
+      throw new Error("PumpFun bot service not initialized");
+    }
+
+    try {
+      const status = this.pumpFunBot.getStatus();
+
+      return {
+        message: "PumpFun bot status retrieved successfully",
+        data: status,
+        summary: status.isListening ? "Bot is actively monitoring" : "Bot is stopped",
+        details: {
+          monitoring: status.isListening,
+          walletAddress: status.walletAddress,
+          activeFilters: status.filters,
+          registeredCallbacks: status.callbacks.length
+        }
+      };
+    } catch (error) {
+      throw new Error(`Status retrieval failed: ${error.message}`);
+    }
+  }
+
+  // Market Maker Tools
+  async initializeMarketMaker(config = {}) {
+    if (!this.marketMaker) {
+      throw new Error('Market maker service not available. Solana wallet required.');
+    }
+
+    if (!this.solanaPrivateKey) {
+      throw new Error('Solana private key required for market maker initialization');
+    }
+
+    try {
+      const result = await this.marketMaker.initialize(this.solanaPrivateKey);
+      
+      return {
+        message: result.success ? 'Market maker initialized successfully' : 'Failed to initialize market maker',
+        data: result,
+        summary: result.success ? 
+          `Market maker ready for wallet: ${result.walletAddress}` : 
+          `Initialization failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Market maker initialization failed: ${error.message}`);
+    }
+  }
+
+  async startMarketMaker({ tokenMint, targetAllocation = 0.5, config = {} }) {
+    if (!this.marketMaker) {
+      throw new Error('Market maker service not available');
+    }
+
+    if (!tokenMint) {
+      throw new Error('Token mint address required');
+    }
+
+    try {
+      // Update configuration if provided
+      if (Object.keys(config).length > 0) {
+        this.marketMaker.updateConfig(config);
+      }
+
+      const result = await this.marketMaker.start(tokenMint, targetAllocation);
+      
+      return {
+        message: result.success ? 'Market maker started successfully' : 'Failed to start market maker',
+        data: {
+          ...result,
+          tokenMint,
+          targetAllocation,
+          configuration: this.marketMaker.config
+        },
+        summary: result.success ? 
+          `Market maker started for ${tokenMint} with ${targetAllocation * 100}% SOL allocation` : 
+          `Start failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Market maker start failed: ${error.message}`);
+    }
+  }
+
+  async stopMarketMaker() {
+    if (!this.marketMaker) {
+      throw new Error('Market maker service not available');
+    }
+
+    try {
+      const result = await this.marketMaker.stop();
+      
+      return {
+        message: result.success ? 'Market maker stopped successfully' : 'Failed to stop market maker',
+        data: result,
+        summary: result.success ? 
+          'Market maker stopped and final stats recorded' : 
+          `Stop failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Market maker stop failed: ${error.message}`);
+    }
+  }
+
+  async getMarketMakerStatus() {
+    if (!this.marketMaker) {
+      throw new Error('Market maker service not available');
+    }
+
+    try {
+      const stats = this.marketMaker.getStats();
+      
+      return {
+        message: 'Market maker status retrieved successfully',
+        data: {
+          status: stats.isRunning ? 'running' : 'stopped',
+          configuration: this.marketMaker.config,
+          statistics: stats,
+          wallet: this.marketMaker.wallet ? this.marketMaker.wallet.publicKey.toString() : null
+        },
+        summary: `Market maker is ${stats.isRunning ? 'active' : 'inactive'} - ${stats.totalTrades} total trades, ${stats.successRate.toFixed(1)}% success rate`
+      };
+    } catch (error) {
+      throw new Error(`Status retrieval failed: ${error.message}`);
+    }
+  }
+
+  async updateMarketMakerConfig(newConfig) {
+    if (!this.marketMaker) {
+      throw new Error('Market maker service not available');
+    }
+
+    if (!newConfig || typeof newConfig !== 'object') {
+      throw new Error('Configuration object required');
+    }
+
+    try {
+      const updatedConfig = this.marketMaker.updateConfig(newConfig);
+      
+      return {
+        message: 'Market maker configuration updated successfully',
+        data: {
+          previousConfig: { ...this.marketMaker.config, ...newConfig },
+          newConfig: updatedConfig,
+          isRunning: this.marketMaker.isRunning
+        },
+        summary: `Configuration updated. Key changes: ${Object.keys(newConfig).join(', ')}`
+      };
+    } catch (error) {
+      throw new Error(`Configuration update failed: ${error.message}`);
+    }
+  }
+
+  async getMarketMakerStats() {
+    if (!this.marketMaker) {
+      throw new Error('Market maker service not available');
+    }
+
+    try {
+      const stats = this.marketMaker.getStats();
+      
+      return {
+        message: 'Market maker statistics retrieved successfully',
+        data: stats,
+        summary: `Runtime: ${Math.round(stats.runtime / 1000 / 60)}min | Trades: ${stats.totalTrades} | Success: ${stats.successRate.toFixed(1)}% | Volume: ${stats.totalVolume}`
+      };
+    } catch (error) {
+      throw new Error(`Statistics retrieval failed: ${error.message}`);
+    }
+  }
+
+  // Wallet Management Tools
+  async generateWallet({ type = 'solana', name = null }) {
+    try {
+      let wallet;
+      
+      if (type === 'solana') {
+        wallet = this.walletManager.generateSolanaWallet();
+      } else if (type === 'ethereum') {
+        wallet = this.walletManager.generateEthereumWallet();
+      } else {
+        throw new Error('Unsupported wallet type. Use "solana" or "ethereum"');
+      }
+
+      // Add name if provided
+      if (name) {
+        wallet.name = name;
+      }
+
+      // Store in manager
+      const key = type === 'solana' ? wallet.address : wallet.address.toLowerCase();
+      this.walletManager.wallets.set(key, { 
+        ...wallet, 
+        generated: true,
+        generatedAt: new Date().toISOString()
+      });
+
+      return {
+        message: `${type.charAt(0).toUpperCase() + type.slice(1)} wallet generated successfully`,
+        data: {
+          type: wallet.type,
+          name: wallet.name || `${type}-${wallet.address.slice(0, 8)}`,
+          address: wallet.address,
+          publicKey: wallet.publicKey,
+          // Only return private key for generated wallets for security
+          privateKey: wallet.privateKey
+        },
+        summary: `Generated ${type} wallet: ${wallet.address}`
+      };
+    } catch (error) {
+      throw new Error(`Wallet generation failed: ${error.message}`);
+    }
+  }
+
+  async importWallet({ type, privateKey, name = null }) {
+    if (!type || !privateKey) {
+      throw new Error('Both type and privateKey are required');
+    }
+
+    try {
+      let result;
+      
+      if (type === 'solana') {
+        result = await this.walletManager.importSolanaWallet(privateKey, name);
+      } else if (type === 'ethereum') {
+        result = await this.walletManager.importEthereumWallet(privateKey, name);
+      } else {
+        throw new Error('Unsupported wallet type. Use "solana" or "ethereum"');
+      }
+
+      return {
+        message: result.message,
+        data: result.success ? {
+          type: result.wallet.type,
+          name: result.wallet.name,
+          address: result.wallet.address,
+          publicKey: result.wallet.publicKey,
+          imported: result.wallet.imported,
+          importedAt: result.wallet.importedAt
+        } : null,
+        summary: result.success ? 
+          `Imported ${type} wallet: ${result.wallet.address}` : 
+          `Import failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Wallet import failed: ${error.message}`);
+    }
+  }
+
+  async exportWallet({ address }) {
+    if (!address) {
+      throw new Error('Wallet address is required');
+    }
+
+    try {
+      const result = this.walletManager.exportWallet(address);
+      
+      return {
+        message: result.message,
+        data: result.success ? result.wallet : null,
+        summary: result.success ? 
+          `Exported wallet: ${result.wallet.address}` : 
+          `Export failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Wallet export failed: ${error.message}`);
+    }
+  }
+
+  async listWallets() {
+    try {
+      const result = await this.walletManager.listWallets();
+      
+      return {
+        message: result.message,
+        data: {
+          wallets: result.wallets,
+          count: result.count
+        },
+        summary: `Found ${result.count} wallet(s) in memory`
+      };
+    } catch (error) {
+      throw new Error(`Wallet listing failed: ${error.message}`);
+    }
+  }
+
+  async removeWallet({ address }) {
+    if (!address) {
+      throw new Error('Wallet address is required');
+    }
+
+    try {
+      const result = await this.walletManager.removeWallet(address);
+      
+      return {
+        message: result.message,
+        data: result.success ? result.removedWallet : null,
+        summary: result.success ? 
+          `Removed wallet: ${result.removedWallet.address}` : 
+          `Removal failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Wallet removal failed: ${error.message}`);
+    }
+  }
+
+  async getWalletBalances({ rpcEndpoint = 'https://api.mainnet-beta.solana.com' } = {}) {
+    try {
+      const result = await this.walletManager.getWalletBalances(rpcEndpoint);
+      
+      return {
+        message: result.message,
+        data: {
+          balances: result.balances,
+          totalWallets: result.totalWallets
+        },
+        summary: `Retrieved balances for ${result.totalWallets} Solana wallet(s)`
+      };
+    } catch (error) {
+      throw new Error(`Balance retrieval failed: ${error.message}`);
+    }
+  }
+
+  async saveWalletsToFile({ password, filename = 'wallets.json' }) {
+    if (!password) {
+      throw new Error('Password is required for encryption');
+    }
+
+    try {
+      const result = await this.walletManager.saveWalletsToFile(password, filename);
+      
+      return {
+        message: result.message,
+        data: result.success ? {
+          filename: result.filename || filename,
+          filePath: result.filePath,
+          walletCount: result.walletCount
+        } : null,
+        summary: result.success ? 
+          `Saved ${result.walletCount} wallet(s) to ${filename}` : 
+          `Save failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Wallet save failed: ${error.message}`);
+    }
+  }
+
+  async loadWalletsFromFile({ password, filename = 'wallets.json' }) {
+    if (!password) {
+      throw new Error('Password is required for decryption');
+    }
+
+    try {
+      const result = await this.walletManager.loadWalletsFromFile(password, filename);
+      
+      return {
+        message: result.message,
+        data: result.success ? {
+          loadedCount: result.loadedCount,
+          totalWallets: result.totalWallets
+        } : null,
+        summary: result.success ? 
+          `Loaded ${result.loadedCount} wallet(s) from ${filename}` : 
+          `Load failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Wallet load failed: ${error.message}`);
+    }
+  }
+
+  async createWalletBackup({ password, backupName = null }) {
+    if (!password) {
+      throw new Error('Password is required for backup encryption');
+    }
+
+    try {
+      const result = await this.walletManager.createBackup(password, backupName);
+      
+      return {
+        message: result.message,
+        data: result.success ? {
+          filename: result.filename,
+          filePath: result.filePath,
+          walletCount: result.walletCount
+        } : null,
+        summary: result.success ? 
+          `Created backup: ${result.filename}` : 
+          `Backup failed: ${result.error}`
+      };
+    } catch (error) {
+      throw new Error(`Backup creation failed: ${error.message}`);
+    }
+  }
 }
