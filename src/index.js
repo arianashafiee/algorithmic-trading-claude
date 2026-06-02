@@ -971,6 +971,806 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["amount", "decimals"],
         },
       },
+      
+      // Solana Tools
+      {
+        name: TOOL_NAMES.GET_SOLANA_BALANCE,
+        description: "Get SOL balance for a Solana wallet address",
+        inputSchema: {
+          type: "object",
+          properties: {
+            cluster: {
+              type: "string",
+              description: "Solana cluster (mainnet-beta, devnet, testnet)",
+              enum: ["mainnet-beta", "devnet", "testnet"],
+            },
+            address: {
+              type: "string",
+              description: "Solana wallet address (optional, uses configured wallet if not provided)",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.TRANSFER_SOL,
+        description: "Transfer SOL to another Solana address",
+        inputSchema: {
+          type: "object",
+          properties: {
+            toAddress: {
+              type: "string",
+              description: "Recipient's Solana wallet address",
+            },
+            amount: {
+              type: "number",
+              description: "Amount of SOL to transfer",
+            },
+            cluster: {
+              type: "string",
+              description: "Solana cluster (mainnet-beta, devnet, testnet)",
+              enum: ["mainnet-beta", "devnet", "testnet"],
+            },
+          },
+          required: ["toAddress", "amount"],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_ACCOUNT_INFO,
+        description: "Get account information for a Solana address",
+        inputSchema: {
+          type: "object",
+          properties: {
+            address: {
+              type: "string",
+              description: "Solana account address to query",
+            },
+            cluster: {
+              type: "string",
+              description: "Solana cluster (mainnet-beta, devnet, testnet)",
+              enum: ["mainnet-beta", "devnet", "testnet"],
+            },
+          },
+          required: ["address"],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_TRANSACTION_STATUS,
+        description: "Get status of a Solana transaction",
+        inputSchema: {
+          type: "object",
+          properties: {
+            signature: {
+              type: "string",
+              description: "Transaction signature to query",
+            },
+            cluster: {
+              type: "string",
+              description: "Solana cluster (mainnet-beta, devnet, testnet)",
+              enum: ["mainnet-beta", "devnet", "testnet"],
+            },
+          },
+          required: ["signature"],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_TRANSACTION_DETAILS,
+        description: "Get detailed information about a Solana transaction",
+        inputSchema: {
+          type: "object",
+          properties: {
+            signature: {
+              type: "string",
+              description: "Transaction signature to query",
+            },
+            cluster: {
+              type: "string",
+              description: "Solana cluster (mainnet-beta, devnet, testnet)",
+              enum: ["mainnet-beta", "devnet", "testnet"],
+            },
+          },
+          required: ["signature"],
+        },
+      },
+      {
+        name: TOOL_NAMES.AIRDROP_SOL,
+        description: "Request SOL airdrop on devnet or testnet",
+        inputSchema: {
+          type: "object",
+          properties: {
+            amount: {
+              type: "number",
+              description: "Amount of SOL to airdrop (default: 1)",
+            },
+            cluster: {
+              type: "string",
+              description: "Solana cluster (devnet, testnet only)",
+              enum: ["devnet", "testnet"],
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_SUPPORTED_CLUSTERS,
+        description: "Get list of supported Solana clusters",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_SLOT,
+        description: "Get current slot information from Solana cluster",
+        inputSchema: {
+          type: "object",
+          properties: {
+            cluster: {
+              type: "string",
+              description: "Solana cluster (mainnet-beta, devnet, testnet)",
+              enum: ["mainnet-beta", "devnet", "testnet"],
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_EPOCH_INFO,
+        description: "Get epoch information from Solana cluster",
+        inputSchema: {
+          type: "object",
+          properties: {
+            cluster: {
+              type: "string",
+              description: "Solana cluster (mainnet-beta, devnet, testnet)",
+              enum: ["mainnet-beta", "devnet", "testnet"],
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_CLUSTER_NODES,
+        description: "Get active nodes in Solana cluster",
+        inputSchema: {
+          type: "object",
+          properties: {
+            cluster: {
+              type: "string",
+              description: "Solana cluster (mainnet-beta, devnet, testnet)",
+              enum: ["mainnet-beta", "devnet", "testnet"],
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_WALLET_ADDRESS,
+        description: "Get configured Solana wallet address",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
+      
+      // Advanced Solana DEX Trading Tools
+      {
+        name: TOOL_NAMES.SWAP_ON_SOLANA_DEX,
+        description: "Execute token swaps on Solana DEXes (Jupiter, Raydium, Meteora) with best price routing",
+        inputSchema: {
+          type: "object",
+          properties: {
+            inputToken: {
+              type: "string",
+              description: "Input token symbol or mint address (e.g., 'SOL', 'USDC')",
+            },
+            outputToken: {
+              type: "string", 
+              description: "Output token symbol or mint address",
+            },
+            amount: {
+              type: "number",
+              description: "Amount to swap (in input token units)",
+            },
+            slippageBps: {
+              type: "number",
+              description: "Maximum slippage in basis points (default: 50 = 0.5%)",
+            },
+            platform: {
+              type: "string",
+              description: "Preferred DEX platform",
+              enum: ["auto", "jupiter", "raydium", "meteora"],
+            },
+          },
+          required: ["inputToken", "outputToken", "amount"],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_DEX_QUOTE,
+        description: "Get price quotes from multiple Solana DEXes to compare execution prices",
+        inputSchema: {
+          type: "object",
+          properties: {
+            inputToken: {
+              type: "string",
+              description: "Input token symbol or mint address",
+            },
+            outputToken: {
+              type: "string",
+              description: "Output token symbol or mint address", 
+            },
+            amount: {
+              type: "number",
+              description: "Amount to swap",
+            },
+            slippageBps: {
+              type: "number",
+              description: "Slippage tolerance in basis points",
+            },
+          },
+          required: ["inputToken", "outputToken", "amount"],
+        },
+      },
+      {
+        name: TOOL_NAMES.CREATE_SOLANA_LIMIT_ORDER,
+        description: "Create limit orders that execute automatically when target prices are reached",
+        inputSchema: {
+          type: "object",
+          properties: {
+            type: {
+              type: "string",
+              description: "Order type",
+              enum: ["buy", "sell"],
+            },
+            inputToken: {
+              type: "string",
+              description: "Input token symbol or mint address",
+            },
+            outputToken: {
+              type: "string",
+              description: "Output token symbol or mint address",
+            },
+            amount: {
+              type: "number", 
+              description: "Amount to trade",
+            },
+            targetPrice: {
+              type: "number",
+              description: "Target execution price per unit",
+            },
+            slippageBps: {
+              type: "number",
+              description: "Maximum slippage in basis points",
+            },
+            expiry: {
+              type: "number",
+              description: "Order expiry timestamp (optional)",
+            },
+          },
+          required: ["type", "inputToken", "outputToken", "amount", "targetPrice"],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_SOLANA_LIMIT_ORDERS,
+        description: "View active, completed, and cancelled limit orders",
+        inputSchema: {
+          type: "object",
+          properties: {
+            status: {
+              type: "string",
+              description: "Filter by order status",
+              enum: ["all", "active", "executed", "cancelled", "expired"],
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.CANCEL_SOLANA_LIMIT_ORDER,
+        description: "Cancel an active limit order",
+        inputSchema: {
+          type: "object",
+          properties: {
+            orderId: {
+              type: "string",
+              description: "ID of the order to cancel",
+            },
+          },
+          required: ["orderId"],
+        },
+      },
+
+      // Memecoin Trading Tools
+      {
+        name: TOOL_NAMES.GET_PUMPFUN_TRENDING,
+        description: "Get trending tokens from PumpFun with risk analysis and filtering",
+        inputSchema: {
+          type: "object",
+          properties: {
+            limit: {
+              type: "number",
+              description: "Number of tokens to return (default: 50)",
+            },
+            sortBy: {
+              type: "string", 
+              description: "Sort criteria",
+              enum: ["created_timestamp", "market_cap", "volume_24h"],
+            },
+            includeNsfw: {
+              type: "boolean",
+              description: "Include NSFW tokens (default: false)",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_PUMPFUN_TOKEN,
+        description: "Get detailed information about a specific PumpFun token with risk assessment",
+        inputSchema: {
+          type: "object",
+          properties: {
+            mintAddress: {
+              type: "string",
+              description: "Token mint address",
+            },
+          },
+          required: ["mintAddress"],
+        },
+      },
+      {
+        name: TOOL_NAMES.QUICK_BUY_MEMECOIN,
+        description: "Instantly buy memecoins with built-in risk controls and safety limits",
+        inputSchema: {
+          type: "object",
+          properties: {
+            tokenAddress: {
+              type: "string",
+              description: "Token contract address",
+            },
+            solAmount: {
+              type: "number",
+              description: "Amount of SOL to spend",
+            },
+            riskLevel: {
+              type: "string",
+              description: "Risk tolerance level", 
+              enum: ["low", "medium", "high"],
+            },
+            maxSlippage: {
+              type: "number",
+              description: "Maximum slippage percentage (overrides risk level default)",
+            },
+          },
+          required: ["tokenAddress", "solAmount"],
+        },
+      },
+      {
+        name: TOOL_NAMES.SCAN_NEW_MEMECOINS,
+        description: "AI-powered discovery and scoring of potential memecoin investments",
+        inputSchema: {
+          type: "object",
+          properties: {
+            maxAgeHours: {
+              type: "number",
+              description: "Maximum age of tokens in hours (default: 24)",
+            },
+            minMarketCap: {
+              type: "number",
+              description: "Minimum market cap filter (default: 5000)",
+            },
+            maxMarketCap: {
+              type: "number",
+              description: "Maximum market cap filter (default: 1000000)",
+            },
+            minHolders: {
+              type: "number", 
+              description: "Minimum number of holders (default: 10)",
+            },
+            riskLevels: {
+              type: "array",
+              description: "Allowed risk levels",
+              items: {
+                type: "string",
+                enum: ["low", "medium", "high"]
+              },
+            },
+          },
+          required: [],
+        },
+      },
+
+      // PumpFun Bot Tools
+      {
+        name: TOOL_NAMES.START_PUMPFUN_BOT,
+        description: "Start monitoring PumpFun for new token launches with customizable filters and auto-trading",
+        inputSchema: {
+          type: "object",
+          properties: {
+            filters: {
+              type: "object",
+              description: "Token filtering criteria",
+              properties: {
+                minMarketCap: { type: "number" },
+                maxMarketCap: { type: "number" },
+                creators: { 
+                  type: "array",
+                  items: { type: "string" }
+                },
+                symbols: {
+                  type: "array", 
+                  items: { type: "string" }
+                },
+                continuousTrading: { type: "boolean" }
+              },
+            },
+            autoTrading: {
+              type: "object",
+              description: "Auto-trading configuration",
+              properties: {
+                enabled: { type: "boolean" },
+                solAmountPerTrade: { type: "number" },
+                maxTradesPerHour: { type: "number" },
+                minMarketCap: { type: "number" },
+                maxMarketCap: { type: "number" },
+                stopAfterHours: { type: "number" }
+              },
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.STOP_PUMPFUN_BOT,
+        description: "Stop the PumpFun monitoring bot",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.PUMPFUN_AUTO_BUY,
+        description: "Execute automatic purchase of a specific PumpFun token with advanced options",
+        inputSchema: {
+          type: "object",
+          properties: {
+            tokenMint: {
+              type: "string",
+              description: "Token mint address to purchase",
+            },
+            solAmount: {
+              type: "number",
+              description: "Amount of SOL to spend",
+            },
+            options: {
+              type: "object",
+              description: "Trading options",
+              properties: {
+                slippageBps: { type: "number" },
+                priorityFee: { type: "number" },
+                maxRetries: { type: "number" }
+              },
+            },
+          },
+          required: ["tokenMint", "solAmount"],
+        },
+      },
+      {
+        name: TOOL_NAMES.PUMPFUN_QUICK_SNIPE,
+        description: "Ultra-fast token purchase for sniping new launches with maximum speed settings",
+        inputSchema: {
+          type: "object",
+          properties: {
+            tokenMint: {
+              type: "string",
+              description: "Token mint address to snipe",
+            },
+            solAmount: {
+              type: "number", 
+              description: "Amount of SOL to spend (default: 0.1)",
+            },
+          },
+          required: ["tokenMint"],
+        },
+      },
+      {
+        name: TOOL_NAMES.SET_PUMPFUN_FILTERS,
+        description: "Configure filtering criteria for the PumpFun bot",
+        inputSchema: {
+          type: "object",
+          properties: {
+            minMarketCap: {
+              type: "number",
+              description: "Minimum market cap threshold",
+            },
+            maxMarketCap: {
+              type: "number",
+              description: "Maximum market cap threshold", 
+            },
+            creators: {
+              type: "array",
+              description: "Specific creator addresses to monitor",
+              items: { type: "string" }
+            },
+            symbols: {
+              type: "array",
+              description: "Token symbols to look for",
+              items: { type: "string" }
+            },
+            continuousTrading: {
+              type: "boolean",
+              description: "Only trade tokens that have graduated to continuous trading",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: TOOL_NAMES.GET_PUMPFUN_BOT_STATUS,
+        description: "Get current status and configuration of the PumpFun bot",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
+
+      // Market Maker Tools
+      {
+        name: TOOL_NAMES.INITIALIZE_MARKET_MAKER,
+        description: "Initialize the market maker with wallet and configuration",
+        inputSchema: {
+          type: "object",
+          properties: {
+            config: {
+              type: "object",
+              description: "Market maker configuration (optional)",
+              properties: {
+                slippageBps: { type: "number", description: "Slippage tolerance in basis points (default: 50)" },
+                priceTolerance: { type: "number", description: "Price tolerance percentage (default: 0.02)" },
+                waitTime: { type: "number", description: "Wait time between rebalances in milliseconds (default: 60000)" },
+                rebalanceThreshold: { type: "number", description: "Rebalance threshold percentage (default: 0.05)" },
+                priorityFee: { type: "number", description: "Priority fee in SOL (default: 0.001)" }
+              }
+            }
+          },
+          required: []
+        }
+      },
+      {
+        name: TOOL_NAMES.START_MARKET_MAKER,
+        description: "Start the market maker bot for a specific token pair",
+        inputSchema: {
+          type: "object",
+          properties: {
+            tokenMint: {
+              type: "string",
+              description: "Token mint address to trade against SOL"
+            },
+            targetAllocation: {
+              type: "number",
+              description: "Target SOL allocation (0.5 = 50% SOL, 50% token, default: 0.5)",
+              minimum: 0.1,
+              maximum: 0.9
+            },
+            config: {
+              type: "object",
+              description: "Runtime configuration overrides (optional)",
+              properties: {
+                slippageBps: { type: "number" },
+                priceTolerance: { type: "number" },
+                waitTime: { type: "number" },
+                rebalanceThreshold: { type: "number" }
+              }
+            }
+          },
+          required: ["tokenMint"]
+        }
+      },
+      {
+        name: TOOL_NAMES.STOP_MARKET_MAKER,
+        description: "Stop the running market maker bot",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
+        }
+      },
+      {
+        name: TOOL_NAMES.GET_MARKET_MAKER_STATUS,
+        description: "Get current status of the market maker including stats and configuration",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
+        }
+      },
+      {
+        name: TOOL_NAMES.UPDATE_MARKET_MAKER_CONFIG,
+        description: "Update market maker configuration while running",
+        inputSchema: {
+          type: "object",
+          properties: {
+            config: {
+              type: "object",
+              description: "Configuration updates",
+              properties: {
+                slippageBps: { type: "number", description: "Slippage tolerance in basis points" },
+                priceTolerance: { type: "number", description: "Price tolerance percentage" },
+                waitTime: { type: "number", description: "Wait time between rebalances in milliseconds" },
+                rebalanceThreshold: { type: "number", description: "Rebalance threshold percentage" },
+                priorityFee: { type: "number", description: "Priority fee in SOL" }
+              }
+            }
+          },
+          required: ["config"]
+        }
+      },
+      {
+        name: TOOL_NAMES.GET_MARKET_MAKER_STATS,
+        description: "Get detailed statistics from the market maker",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
+        }
+      },
+
+      // Wallet Management Tools
+      {
+        name: TOOL_NAMES.GENERATE_WALLET,
+        description: "Generate a new Solana or Ethereum wallet",
+        inputSchema: {
+          type: "object",
+          properties: {
+            type: {
+              type: "string",
+              description: "Wallet type to generate",
+              enum: ["solana", "ethereum"],
+              default: "solana"
+            },
+            name: {
+              type: "string",
+              description: "Optional name for the wallet"
+            }
+          },
+          required: []
+        }
+      },
+      {
+        name: TOOL_NAMES.IMPORT_WALLET,
+        description: "Import a wallet using its private key",
+        inputSchema: {
+          type: "object",
+          properties: {
+            type: {
+              type: "string",
+              description: "Wallet type (solana or ethereum)",
+              enum: ["solana", "ethereum"]
+            },
+            privateKey: {
+              type: "string",
+              description: "Private key in appropriate format (base58 for Solana, hex for Ethereum)"
+            },
+            name: {
+              type: "string",
+              description: "Optional name for the wallet"
+            }
+          },
+          required: ["type", "privateKey"]
+        }
+      },
+      {
+        name: TOOL_NAMES.EXPORT_WALLET,
+        description: "Export a wallet's private key by address",
+        inputSchema: {
+          type: "object",
+          properties: {
+            address: {
+              type: "string",
+              description: "Wallet address to export"
+            }
+          },
+          required: ["address"]
+        }
+      },
+      {
+        name: TOOL_NAMES.LIST_WALLETS,
+        description: "List all imported and generated wallets",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
+        }
+      },
+      {
+        name: TOOL_NAMES.REMOVE_WALLET,
+        description: "Remove a wallet from memory",
+        inputSchema: {
+          type: "object",
+          properties: {
+            address: {
+              type: "string",
+              description: "Wallet address to remove"
+            }
+          },
+          required: ["address"]
+        }
+      },
+      {
+        name: TOOL_NAMES.GET_WALLET_BALANCES,
+        description: "Get balances for all Solana wallets",
+        inputSchema: {
+          type: "object",
+          properties: {
+            rpcEndpoint: {
+              type: "string",
+              description: "Solana RPC endpoint (optional, defaults to mainnet-beta)",
+              default: "https://api.mainnet-beta.solana.com"
+            }
+          },
+          required: []
+        }
+      },
+      {
+        name: TOOL_NAMES.SAVE_WALLETS_TO_FILE,
+        description: "Save all wallets to an encrypted file",
+        inputSchema: {
+          type: "object",
+          properties: {
+            password: {
+              type: "string",
+              description: "Password for encryption"
+            },
+            filename: {
+              type: "string",
+              description: "Filename for the wallet file (optional, defaults to 'wallets.json')",
+              default: "wallets.json"
+            }
+          },
+          required: ["password"]
+        }
+      },
+      {
+        name: TOOL_NAMES.LOAD_WALLETS_FROM_FILE,
+        description: "Load wallets from an encrypted file",
+        inputSchema: {
+          type: "object",
+          properties: {
+            password: {
+              type: "string",
+              description: "Password for decryption"
+            },
+            filename: {
+              type: "string",
+              description: "Filename of the wallet file (optional, defaults to 'wallets.json')",
+              default: "wallets.json"
+            }
+          },
+          required: ["password"]
+        }
+      },
+      {
+        name: TOOL_NAMES.CREATE_WALLET_BACKUP,
+        description: "Create an encrypted backup of all wallets",
+        inputSchema: {
+          type: "object",
+          properties: {
+            password: {
+              type: "string",
+              description: "Password for backup encryption"
+            },
+            backupName: {
+              type: "string",
+              description: "Custom backup filename (optional, auto-generated if not provided)"
+            }
+          },
+          required: ["password"]
+        }
+      },
     ],
   };
 });
@@ -1180,10 +1980,182 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case TOOL_NAMES.CONVERT_FORMATTED_TO_WEI:
         result = await toolService.convertFormattedToWei(args);
         break;
+
+      // Solana Tools
+      case TOOL_NAMES.GET_SOLANA_BALANCE:
+        result = await toolService.getSolanaBalance(args);
+        break;
+
+      case TOOL_NAMES.TRANSFER_SOL:
+        result = await toolService.transferSOL(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_ACCOUNT_INFO:
+        result = await toolService.getSolanaAccountInfo(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_TRANSACTION_STATUS:
+        result = await toolService.getSolanaTransactionStatus(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_TRANSACTION_DETAILS:
+        result = await toolService.getSolanaTransactionDetails(args);
+        break;
+
+      case TOOL_NAMES.AIRDROP_SOL:
+        result = await toolService.airdropSOL(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_SUPPORTED_CLUSTERS:
+        result = await toolService.getSolanaSupportedClusters(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_SLOT:
+        result = await toolService.getSolanaSlot(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_EPOCH_INFO:
+        result = await toolService.getSolanaEpochInfo(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_CLUSTER_NODES:
+        result = await toolService.getSolanaClusterNodes(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_WALLET_ADDRESS:
+        result = toolService.getSolanaWalletAddress();
+        break;
+
+      // Advanced Solana DEX Trading Tools
+      case TOOL_NAMES.SWAP_ON_SOLANA_DEX:
+        result = await toolService.swapOnSolanaDex(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_DEX_QUOTE:
+        result = await toolService.getSolanaDexQuote(args);
+        break;
+
+      case TOOL_NAMES.CREATE_SOLANA_LIMIT_ORDER:
+        result = await toolService.createSolanaLimitOrder(args);
+        break;
+
+      case TOOL_NAMES.GET_SOLANA_LIMIT_ORDERS:
+        result = await toolService.getSolanaLimitOrders(args);
+        break;
+
+      case TOOL_NAMES.CANCEL_SOLANA_LIMIT_ORDER:
+        result = await toolService.cancelSolanaLimitOrder(args);
+        break;
+
+      // Memecoin Trading Tools
+      case TOOL_NAMES.GET_PUMPFUN_TRENDING:
+        result = await toolService.getPumpfunTrending(args);
+        break;
+
+      case TOOL_NAMES.GET_PUMPFUN_TOKEN:
+        result = await toolService.getPumpfunToken(args);
+        break;
+
+      case TOOL_NAMES.QUICK_BUY_MEMECOIN:
+        result = await toolService.quickBuyMemecoin(args);
+        break;
+
+      case TOOL_NAMES.SCAN_NEW_MEMECOINS:
+        result = await toolService.scanNewMemecoins(args);
+        break;
+
+      // PumpFun Bot Tools
+      case TOOL_NAMES.START_PUMPFUN_BOT:
+        result = await toolService.startPumpfunBot(args);
+        break;
+
+      case TOOL_NAMES.STOP_PUMPFUN_BOT:
+        result = await toolService.stopPumpfunBot();
+        break;
+
+      case TOOL_NAMES.PUMPFUN_AUTO_BUY:
+        result = await toolService.pumpfunAutoBuy(args);
+        break;
+
+      case TOOL_NAMES.PUMPFUN_QUICK_SNIPE:
+        result = await toolService.pumpfunQuickSnipe(args);
+        break;
+
+      case TOOL_NAMES.SET_PUMPFUN_FILTERS:
+        result = await toolService.setPumpfunFilters(args);
+        break;
+
+      case TOOL_NAMES.GET_PUMPFUN_BOT_STATUS:
+        result = await toolService.getPumpfunBotStatus();
+        break;
+
+      // Market Maker Tools
+      case TOOL_NAMES.INITIALIZE_MARKET_MAKER:
+        result = await toolService.initializeMarketMaker(args.config);
+        break;
+
+      case TOOL_NAMES.START_MARKET_MAKER:
+        result = await toolService.startMarketMaker(args);
+        break;
+
+      case TOOL_NAMES.STOP_MARKET_MAKER:
+        result = await toolService.stopMarketMaker();
+        break;
+
+      case TOOL_NAMES.GET_MARKET_MAKER_STATUS:
+        result = await toolService.getMarketMakerStatus();
+        break;
+
+      case TOOL_NAMES.UPDATE_MARKET_MAKER_CONFIG:
+        result = await toolService.updateMarketMakerConfig(args.config);
+        break;
+
+      case TOOL_NAMES.GET_MARKET_MAKER_STATS:
+        result = await toolService.getMarketMakerStats();
+        break;
+
+      // Wallet Management Tools
+      case TOOL_NAMES.GENERATE_WALLET:
+        result = await toolService.generateWallet(args);
+        break;
+
+      case TOOL_NAMES.IMPORT_WALLET:
+        result = await toolService.importWallet(args);
+        break;
+
+      case TOOL_NAMES.EXPORT_WALLET:
+        result = await toolService.exportWallet(args);
+        break;
+
+      case TOOL_NAMES.LIST_WALLETS:
+        result = await toolService.listWallets();
+        break;
+
+      case TOOL_NAMES.REMOVE_WALLET:
+        result = await toolService.removeWallet(args);
+        break;
+
+      case TOOL_NAMES.GET_WALLET_BALANCES:
+        result = await toolService.getWalletBalances(args);
+        break;
+
+      case TOOL_NAMES.SAVE_WALLETS_TO_FILE:
+        result = await toolService.saveWalletsToFile(args);
+        break;
+
+      case TOOL_NAMES.LOAD_WALLETS_FROM_FILE:
+        result = await toolService.loadWalletsFromFile(args);
+        break;
+
+      case TOOL_NAMES.CREATE_WALLET_BACKUP:
+        result = await toolService.createWalletBackup(args);
+        break;
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
 
+    // Format the result for MCP protocol
     return {
       content: [
         {
