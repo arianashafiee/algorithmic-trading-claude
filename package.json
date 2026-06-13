@@ -1,26 +1,77 @@
 {
-  "name": "@degentic/cc-trading-terminal",
-  "version": "2.0.0",
   "type": "module",
-  "description": "MCP server for agent-native crypto trading",
+  "name": "@degentic/cc-trading-terminal",
+  "version": "2.2.0",
+  "description": "Agent-native trading terminal built on top of Claude Code with advanced real-time data ingestion pipeline. Deploy sub-agents that execute trades, monitor positions, and manage risk in parallel across unlimited wallets.",
   "main": "src/index.js",
-  "bin": { "cc-trading-terminal": "src/index.js" },
+  "bin": {
+    "cc-trading-terminal": "src/index.js"
+  },
+  "files": [
+    "src/",
+    "setup.js",
+    ".env.example",
+    "README.md"
+  ],
+  "homepage": "https://github.com/degentic-tools/claude-code-trading-terminal#readme",
+  "bugs": {
+    "url": "https://github.com/degentic-tools/claude-code-trading-terminal/issues"
+  },
   "scripts": {
     "start": "node src/index.js",
+    "test": "node test.js",
     "setup": "node setup.js",
-    "setup:dev": "node setup.js --dev"
+    "setup:dev": "node setup.js --dev",
+    "pipeline:start": "node src/pipeline/examples/start-pipeline.js",
+    "pipeline:test": "node src/pipeline/examples/test-pipeline.js"
   },
+  "keywords": [
+    "crypto-trading",
+    "solana-trading",
+    "pumpfun-bot",
+    "memecoin-trading",
+    "trading-bot",
+    "dex-aggregator",
+    "jupiter-aggregator",
+    "raydium",
+    "meteora",
+    "limit-orders",
+    "claude-code",
+    "mcp",
+    "web3",
+    "solana",
+    "blockchain",
+    "automated-trading",
+    "data-pipeline",
+    "real-time-data",
+    "market-data",
+    "aladdin-alternative",
+    "data-ingestion",
+    "websocket-streams"
+  ],
+  "author": "degentic-tools",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/degentic-tools/claude-code-trading-terminal.git"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.3",
-    "dotenv": "^16.4.7",
-    "node-fetch": "^3.3.2",
-    "ethers": "^6.15.0",
-    "@solana/web3.js": "^1.98.4",
+    "@project-serum/anchor": "^0.26.0",
     "@solana/spl-token": "^0.4.8",
+    "@solana/web3.js": "^1.98.4",
     "bs58": "^6.0.0",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.15.0",
+    "node-fetch": "^3.3.2",
     "ws": "^8.18.0",
     "eventsource": "^2.0.2"
   },
-  "engines": { "node": ">=18.0.0" }
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.0.0"
+  }
 }
