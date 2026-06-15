@@ -279,7 +279,10 @@ export class FeedConnectionManager extends EventEmitter {
       return;
     }
 
-    const delay = this.options.reconnectDelay * Math.pow(2, connection.reconnectAttempts);
+    const delay = Math.min(
+      this.options.reconnectDelay * Math.pow(2, connection.reconnectAttempts),
+      60000
+    );
     connection.reconnectAttempts++;
 
     const timer = setTimeout(async () => {
