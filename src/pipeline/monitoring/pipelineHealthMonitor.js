@@ -362,11 +362,13 @@ export class PipelineHealthMonitor extends EventEmitter {
 
     // System-wide alerts
     if (this.systemHealth.status === 'critical') {
+      this.logger.warn('System health critical', this.systemHealth);
       this.emit('system-critical', {
         status: this.systemHealth,
         timestamp: Date.now()
       });
     } else if (this.systemHealth.status === 'degraded') {
+      this.logger.warn('System health degraded', this.systemHealth);
       this.emit('system-degraded', {
         status: this.systemHealth,
         timestamp: Date.now()
