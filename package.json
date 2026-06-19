@@ -22,8 +22,8 @@
     "test": "node test.js",
     "setup": "node setup.js",
     "setup:dev": "node setup.js --dev",
-    "pipeline:start": "node src/pipeline/examples/start-pipeline.js",
-    "pipeline:test": "node src/pipeline/examples/test-pipeline.js"
+    "pipeline:start": "node src/pipeline/examples/startDataPipeline.js",
+    "pipeline:test": "node src/pipeline/examples/startDataPipeline.js"
   },
   "keywords": [
     "crypto-trading",
