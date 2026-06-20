@@ -23,13 +23,13 @@ Your keys stay on your machine. The server signs transactions locally and never 
 **Install**
 
 ```bash
-npm install @degentic/cc-trading-terminal
+npm install @degentic/smart-trade-ai
 ```
 
 **Add to Claude Code**
 
 ```bash
-claude mcp add cc-trading-terminal \
+claude mcp add smart-trade-ai \
   -e USER_PRIVATE_KEY=your_evm_private_key \
   -e USER_ADDRESS=0xYourEVMWalletAddress \
   -e COINGECKO_API_KEY=your_coingecko_api_key \
