@@ -1,4 +1,4 @@
-# CC Trading Terminal
+# Smart Trade AI
 
 An MCP server that lets Claude Code (and other MCP clients) trade crypto, read market data, and manage wallets across EVM chains and Solana.
 
